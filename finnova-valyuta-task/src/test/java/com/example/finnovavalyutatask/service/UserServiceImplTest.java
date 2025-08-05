@@ -1,11 +1,16 @@
 package com.example.finnovavalyutatask.service;
 
-import com.example.finnovavalyutatask.dto.*;
 import com.example.finnovavalyutatask.entity.Role;
 import com.example.finnovavalyutatask.entity.User;
 import com.example.finnovavalyutatask.entity.enums.UserRole;
 import com.example.finnovavalyutatask.exps.RecordAlreadyException;
 import com.example.finnovavalyutatask.exps.RecordNotFoundException;
+import com.example.finnovavalyutatask.payload.dto.request.RefreshTokenDto;
+import com.example.finnovavalyutatask.payload.dto.request.UserRequestDto;
+import com.example.finnovavalyutatask.payload.dto.request.UserUpdateRequestDto;
+import com.example.finnovavalyutatask.payload.dto.response.LoginResponseDto;
+import com.example.finnovavalyutatask.payload.dto.response.UserCreateResponseDto;
+import com.example.finnovavalyutatask.payload.dto.response.UserResponseDto;
 import com.example.finnovavalyutatask.repository.RoleRepository;
 import com.example.finnovavalyutatask.repository.UserRepository;
 import com.example.finnovavalyutatask.service.impl.UserServiceImpl;
@@ -102,7 +107,7 @@ class UserServiceImplTest {
     @Test
     @DisplayName("should return login response with tokens when sign-in is successful")
     void signIn_ShouldReturnLoginResponse_WhenSignInIsSuccessful() throws JsonProcessingException {
-        // Given
+
         UserRequestDto loginDto = new UserRequestDto("testuser", "password123");
         User authenticatedUser = User.builder().id(1L).username("testuser").build();
         Authentication authentication = mock(Authentication.class);
@@ -125,7 +130,7 @@ class UserServiceImplTest {
     @Test
     @DisplayName("should throw BadCredentialsException when sign-in fails due to invalid credentials")
     void signIn_ShouldThrowBadCredentialsException_WhenInvalidCredentials() throws JsonProcessingException {
-        // Given
+
         UserRequestDto loginDto = new UserRequestDto("invaliduser", "wrongpassword");
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
@@ -143,7 +148,7 @@ class UserServiceImplTest {
     @Test
     @DisplayName("should return new tokens when refresh token is valid")
     void refreshToken_ShouldReturnNewTokens_WhenRefreshTokenIsValid() throws JsonProcessingException {
-        // Given
+
         RefreshTokenDto refreshTokenDto = new RefreshTokenDto("validRefreshToken");
         String username = "testuser";
         User user = User.builder().id(1L).username(username).build();
@@ -171,7 +176,7 @@ class UserServiceImplTest {
     @Test
     @DisplayName("should throw RecordNotFoundException when user associated with refresh token is not found")
     void refreshToken_ShouldThrowRecordNotFoundException_WhenUserNotFound() throws JsonProcessingException {
-        // Given
+
         RefreshTokenDto refreshTokenDto = new RefreshTokenDto("validRefreshToken");
         String username = "nonexistentuser";
         io.jsonwebtoken.Claims claims = mock(io.jsonwebtoken.Claims.class);
@@ -225,7 +230,7 @@ class UserServiceImplTest {
     @Test
     @DisplayName("should throw RecordAlreadyException when username is already taken during user creation by admin")
     void createUser_ShouldThrowRecordAlreadyException_WhenUsernameAlreadyTakenByAdmin() {
-        // Given
+
         UserUpdateRequestDto requestDto = new UserUpdateRequestDto("existinguser", "pass", List.of(1L));
         User existingUser = User.builder().id(1L).username("existinguser").build();
 
@@ -244,7 +249,7 @@ class UserServiceImplTest {
     @Test
     @DisplayName("should return user by id when user exists")
     void getUserById_ShouldReturnUser_WhenUserExists() {
-        // Given
+
         Long userId = 1L;
         User foundUser = User.builder().id(userId).username("founduser").build();
         when(userRepository.findById(userId)).thenReturn(Optional.of(foundUser));
@@ -274,7 +279,7 @@ class UserServiceImplTest {
     @Test
     @DisplayName("should update user for admin successfully when user exists")
     void updateUserForAdmin_ShouldUpdateUser_WhenUserExists() {
-        // Given
+
         Long userId = 1L;
         UserUpdateRequestDto updateDto = new UserUpdateRequestDto("updateduser", "newpass", List.of(2L));
         Role adminRole = Role.builder().id(2L).role(UserRole.ROLE_ADMIN).build();
@@ -319,7 +324,7 @@ class UserServiceImplTest {
     @Test
     @DisplayName("should update user successfully when user exists and updates own profile")
     void updateUser_ShouldUpdateUser_WhenUserExistsAndUpdatesOwnProfile() {
-        // Given
+
         Long userId = 1L;
         UserRequestDto updateDto = new UserRequestDto("selfupdateduser", "newpass");
         User existingUser = User.builder().id(userId).username("olduser").password("oldpass").roles(Collections.emptyList()).build();
@@ -341,12 +346,11 @@ class UserServiceImplTest {
     @Test
     @DisplayName("should throw RecordNotFoundException when user does not exist for updateUser")
     void updateUser_ShouldThrowRecordNotFoundException_WhenUserDoesNotExist() {
-        // Given
+
         Long userId = 99L;
         UserRequestDto updateDto = new UserRequestDto("selfupdateduser", "newpass");
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        // When & Then
         RecordNotFoundException exception = assertThrows(RecordNotFoundException.class,
                 () -> userService.updateUser(userId, updateDto));
 
@@ -356,7 +360,6 @@ class UserServiceImplTest {
         verify(userRepository, never()).save(any(User.class));
     }
 
-    // --- deleteUserById Metodi Testlari ---
     @Test
     @DisplayName("should delete user successfully when user exists")
     void deleteUserById_ShouldDeleteUser_WhenUserExists() {

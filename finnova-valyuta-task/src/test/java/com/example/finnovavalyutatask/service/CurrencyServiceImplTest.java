@@ -1,6 +1,6 @@
 package com.example.finnovavalyutatask.service;
 
-import com.example.finnovavalyutatask.dto.CurrencyDto;
+import com.example.finnovavalyutatask.payload.dto.CurrencyDto;
 import com.example.finnovavalyutatask.entity.CurrencyEntity;
 import com.example.finnovavalyutatask.mapper.CurrencyMapper;
 import com.example.finnovavalyutatask.repository.CurrencyRepository;
@@ -48,7 +48,7 @@ class CurrencyServiceImplTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         currencyService = new CurrencyServiceImpl(restTemplate, currencyMapper, currencyRepository);
-        // Set private @Value field manually
+
         ReflectionTestUtils.setField(currencyService, "currencyApiUrl", "https://mock.api.uz");
     }
 

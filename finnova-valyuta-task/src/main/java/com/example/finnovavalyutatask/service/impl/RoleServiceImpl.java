@@ -1,6 +1,6 @@
 package com.example.finnovavalyutatask.service.impl;
 
-import com.example.finnovavalyutatask.dto.RoleDTO;
+import com.example.finnovavalyutatask.payload.dto.response.RoleDTO;
 import com.example.finnovavalyutatask.repository.RoleRepository;
 import com.example.finnovavalyutatask.service.RoleService;
 import org.springframework.stereotype.Service;

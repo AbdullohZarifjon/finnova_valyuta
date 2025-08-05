@@ -1,6 +1,6 @@
 package com.example.finnovavalyutatask.mapper;
 
-import com.example.finnovavalyutatask.dto.CurrencyDto;
+import com.example.finnovavalyutatask.payload.dto.CurrencyDto;
 import com.example.finnovavalyutatask.entity.CurrencyEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

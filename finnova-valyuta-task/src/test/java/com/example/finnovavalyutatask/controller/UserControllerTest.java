@@ -1,36 +1,25 @@
 package com.example.finnovavalyutatask.controller;
 
-import com.example.finnovavalyutatask.dto.UserRequestDto;
-import com.example.finnovavalyutatask.dto.UserResponseDto;
-import com.example.finnovavalyutatask.dto.UserUpdateRequestDto;
-import com.example.finnovavalyutatask.entity.Role;
-import com.example.finnovavalyutatask.entity.enums.UserRole;
-import com.example.finnovavalyutatask.exps.RecordNotFoundException;
-import com.example.finnovavalyutatask.filter.JwtAuthenticationFilter;
-import com.example.finnovavalyutatask.service.JwtService;
-import com.example.finnovavalyutatask.service.UserService;
+import com.example.finnovavalyutatask.payload.dto.request.UserRequestDto;
+import com.example.finnovavalyutatask.payload.dto.request.UserUpdateRequestDto;
+import com.example.finnovavalyutatask.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.Claims;
-import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(SpringExtension.class)
-@WebMvcTest(UserController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 class UserControllerTest {
 
     @Autowired
@@ -39,146 +28,115 @@ class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
-    private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
 
-    @MockBean
-    private JwtService jwtService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-    @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private String accessTokenAdmin;
+    private String accessTokenUser;
 
-    private UserResponseDto createSampleUser() {
-        return new UserResponseDto(1L, "user", "1234", List.of(new Role(1L, UserRole.ROLE_USER)));
+    @BeforeEach
+    void setUp() throws Exception {
+        accessTokenAdmin = obtainToken("admin", "admin");
+        accessTokenUser = obtainToken("string", "string");
     }
 
-    @Nested
-    class AdminTests {
+    private String obtainToken(String username, String password) throws Exception {
+        var loginPayload = """
+                {
+                  "username": "%s",
+                  "password": "%s"
+                }
+                """.formatted(username, password);
 
-        @Test
-        @WithMockUser(roles = "ADMIN")
-        void createUser_WithValidRequest_ShouldReturnUser() throws Exception {
-            UserUpdateRequestDto requestDto = new UserUpdateRequestDto("newuser", "1233", List.of(2L));
-            UserResponseDto responseDto = createSampleUser();
-            when(userService.createUser(any(UserUpdateRequestDto.class))).thenReturn(responseDto);
-            Claims claims = mock(Claims.class);
-            when(claims.get("roles", List.class)).thenReturn(List.of(new Role(1L, UserRole.ROLE_ADMIN)));
-            when(jwtService.accessTokenClaims(anyString())).thenReturn(claims);
-            doNothing().when(jwtService).validateAccessToken(anyString());
+        var response = mockMvc.perform(post("/api/auth/sign-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginPayload))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-            mockMvc.perform(post("/api/users")
-                            .header("Authorization", "Bearer dummy-token")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(requestDto)));
-        }
+        return "Bearer " + objectMapper.readTree(response).get("data").get("accessToken").asText();
 
-        @Test
-        @WithMockUser(roles = "ADMIN")
-        void createUser_WithInvalidRequest_ShouldReturnBadRequest() throws Exception {
-            UserUpdateRequestDto invalidRequest = new UserUpdateRequestDto("", "", List.of());
-
-            mockMvc.perform(post("/api/users")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(invalidRequest)));
-        }
-
-        @Test
-        @WithMockUser(roles = "ADMIN")
-        void updateUser_WithValidRequest_ShouldReturnUpdatedUser() throws Exception {
-            UserUpdateRequestDto requestDto = new UserUpdateRequestDto("updatedUser", "newpass", List.of(2L));
-            UserResponseDto responseDto = createSampleUser();
-            when(userService.updateUserForAdmin(eq(1L), any(UserUpdateRequestDto.class))).thenReturn(responseDto);
-
-            mockMvc.perform(put("/api/users/1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(requestDto)));
-        }
-
-        @Test
-        @WithMockUser(roles = {"ADMIN"})
-        void deleteUser_WithValidId_ShouldReturnNoContent() throws Exception {
-            doNothing().when(userService).deleteUserById(1L);
-
-            mockMvc.perform(delete("/api/users/1"));
-        }
     }
 
-    @Nested
-    class UserTests {
+    @Test
+    void adminCanCreateUser() throws Exception {
+        var request = new UserUpdateRequestDto("newuser", "password", List.of(1L));
 
-        @Test
-        @WithMockUser
-        void updateUser_WithValidRequest_ShouldReturnUpdatedUser() throws Exception {
-            UserRequestDto requestDto = new UserRequestDto("user", "newpass");
-            UserResponseDto responseDto = createSampleUser();
-            when(userService.updateUser(eq(1L), any(UserRequestDto.class))).thenReturn(responseDto);
-
-            mockMvc.perform(put("/api/users/update/1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(requestDto)));
-        }
-
-        @Test
-        void updateUser_WithoutAuthentication_ShouldReturnUnauthorized() throws Exception {
-            UserRequestDto requestDto = new UserRequestDto("user", "newpass");
-
-            mockMvc.perform(put("/api/users/update/1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(requestDto)));
-        }
+        mockMvc.perform(post("/api/users")
+                        .header("Authorization", accessTokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Foydalanuvchi yaratildi"))
+                .andExpect(jsonPath("$.data.username").value("newuser"));
     }
 
-    @Nested
-    class GeneralTests {
+    @Test
+    void nonAdminCannotCreateUser() throws Exception {
+        var request = new UserUpdateRequestDto("forbiddenUser", "password", List.of(1L));
 
-        @Test
-        @WithMockUser
-        void getUserById_WithValidId_ShouldReturnUser() throws Exception {
-            UserResponseDto responseDto = createSampleUser();
-            when(userService.getUserById(1L)).thenReturn(responseDto);
+        mockMvc.perform(post("/api/users")
+                        .header("Authorization", accessTokenUser)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
 
-            mockMvc.perform(get("/api/users/1"))
-                    .andExpect(status().isOk());
-        }
+    @Test
+    void authenticatedUserCanGetUserById() throws Exception {
+        mockMvc.perform(get("/api/users/1")
+                        .header("Authorization", accessTokenUser))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Foydalanuvchi topildi"));
+    }
 
-        @Test
-        @WithMockUser
-        void getUserById_WithNonExistentId_ShouldReturnNotFound() throws Exception {
-            when(userService.getUserById(999L)).thenThrow(new RecordNotFoundException("User not found"));
+    @Test
+    void unauthenticatedUserCannotAccessProtectedEndpoint() throws Exception {
+        mockMvc.perform(get("/api/users/1"))
+                .andExpect(status().isUnauthorized());
+    }
 
-            mockMvc.perform(get("/api/users/999"));
-        }
+    @Test
+    void adminCanUpdateUserFully() throws Exception {
+        var updateDto = new UserUpdateRequestDto("updatedAdminUser", "newpass", List.of(1L));
 
-        @Test
-        void getUserById_WithoutAuthentication_ShouldReturnUnauthorized() throws Exception {
-            mockMvc.perform(get("/api/users/1"))
-                    .andExpect(status().isUnauthorized());
-        }
+        mockMvc.perform(put("/api/users/3")
+                        .header("Authorization", accessTokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Foydalanuvchi yangilandi"));
+    }
 
-        @Test
-        void createUser_WithoutAdminRole_ShouldReturnForbidden() throws Exception {
-            UserUpdateRequestDto requestDto = new UserUpdateRequestDto("user", "1234", List.of(1L));
+    @Test
+    void userCanUpdateOwnAccount() throws Exception {
+        var updateDto = new UserRequestDto("updatedUser", "newpass");
 
-            mockMvc.perform(post("/api/users")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(requestDto)))
-                    .andExpect(status().isForbidden());
-        }
+        mockMvc.perform(put("/api/users/update/4")
+                        .header("Authorization", accessTokenUser)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Profil yangilandi"));
+    }
 
-        @Test
-        void updateUserForAdmin_WithoutAdminRole_ShouldReturnForbidden() throws Exception {
-            UserUpdateRequestDto requestDto = new UserUpdateRequestDto("user", "1234", List.of(1L));
+    @Test
+    void adminCanDeleteUser() throws Exception {
+        mockMvc.perform(delete("/api/users/5")
+                        .header("Authorization", accessTokenAdmin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Foydalanuvchi o'chirildi"));
+    }
 
-            mockMvc.perform(put("/api/users/1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(requestDto)))
-                    .andExpect(status().isForbidden());
-        }
-
-        @Test
-        void deleteUser_WithoutAdminRole_ShouldReturnForbidden() throws Exception {
-            mockMvc.perform(delete("/api/users/1"))
-                    .andExpect(status().isForbidden());
-        }
+    @Test
+    void userCannotDeleteUser() throws Exception {
+        mockMvc.perform(delete("/api/users/4")
+                        .header("Authorization", accessTokenUser))
+                .andExpect(status().isForbidden());
     }
 }

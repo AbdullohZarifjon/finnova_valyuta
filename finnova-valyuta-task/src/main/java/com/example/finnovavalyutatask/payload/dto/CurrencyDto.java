@@ -1,4 +1,4 @@
-package com.example.finnovavalyutatask.dto;
+package com.example.finnovavalyutatask.payload.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

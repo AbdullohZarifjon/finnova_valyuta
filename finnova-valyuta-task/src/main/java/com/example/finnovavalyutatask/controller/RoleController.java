@@ -1,6 +1,8 @@
 package com.example.finnovavalyutatask.controller;
 
-import com.example.finnovavalyutatask.dto.RoleDTO;
+import com.example.finnovavalyutatask.payload.ApiResponse;
+import com.example.finnovavalyutatask.payload.ApiResponseFactory;
+import com.example.finnovavalyutatask.payload.dto.response.RoleDTO;
 import com.example.finnovavalyutatask.service.RoleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +22,7 @@ public class RoleController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RoleDTO>> getAllRoles() {
-        return ResponseEntity.ok(roleService.getAllRoles());
+    public ResponseEntity<ApiResponse<List<RoleDTO>>> getAllRoles() {
+        return ApiResponseFactory.success(roleService.getAllRoles());
     }
 }

@@ -1,6 +1,11 @@
 package com.example.finnovavalyutatask.service;
 
-import com.example.finnovavalyutatask.dto.*;
+import com.example.finnovavalyutatask.payload.dto.request.RefreshTokenDto;
+import com.example.finnovavalyutatask.payload.dto.request.UserRequestDto;
+import com.example.finnovavalyutatask.payload.dto.request.UserUpdateRequestDto;
+import com.example.finnovavalyutatask.payload.dto.response.LoginResponseDto;
+import com.example.finnovavalyutatask.payload.dto.response.UserCreateResponseDto;
+import com.example.finnovavalyutatask.payload.dto.response.UserResponseDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 public interface UserService {

@@ -1,6 +1,6 @@
 package com.example.finnovavalyutatask.service.impl;
 
-import com.example.finnovavalyutatask.dto.CurrencyDto;
+import com.example.finnovavalyutatask.payload.dto.CurrencyDto;
 import com.example.finnovavalyutatask.entity.CurrencyEntity;
 import com.example.finnovavalyutatask.mapper.CurrencyMapper;
 import com.example.finnovavalyutatask.repository.CurrencyRepository;

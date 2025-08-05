@@ -1,6 +1,6 @@
 package com.example.finnovavalyutatask.service;
 
-import com.example.finnovavalyutatask.dto.CurrencyDto;
+import com.example.finnovavalyutatask.payload.dto.CurrencyDto;
 
 import java.time.LocalDate;
 import java.util.List;

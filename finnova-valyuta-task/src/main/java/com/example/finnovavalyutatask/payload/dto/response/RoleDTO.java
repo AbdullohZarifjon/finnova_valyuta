@@ -1,4 +1,4 @@
-package com.example.finnovavalyutatask.dto;
+package com.example.finnovavalyutatask.payload.dto.response;
 
 import lombok.*;
 

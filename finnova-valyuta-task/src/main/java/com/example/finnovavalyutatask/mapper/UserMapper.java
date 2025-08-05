@@ -1,7 +1,7 @@
 package com.example.finnovavalyutatask.mapper;
 
-import com.example.finnovavalyutatask.dto.UserCreateResponseDto;
-import com.example.finnovavalyutatask.dto.UserResponseDto;
+import com.example.finnovavalyutatask.payload.dto.response.UserCreateResponseDto;
+import com.example.finnovavalyutatask.payload.dto.response.UserResponseDto;
 import com.example.finnovavalyutatask.entity.User;
 
 public class UserMapper {
